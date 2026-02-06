@@ -3,9 +3,29 @@ import { NextResponse } from "next/server";
 import type { Part } from "@google/genai";
 import { RENDER_PRESETS, type RenderPresetId } from "@/lib/render-presets";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY!,
-});
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function getAi() {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    // não quebra build; vira erro controlado em runtime
+    throw new Error("GEMINI_API_KEY não configurada no servidor.");
+  }
+
+  return new GoogleGenAI({ apiKey });
+}
+
+function getErrorMessage(err: unknown) {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return "Erro na renderização IA";
+  }
+}
 
 function isPresetId(v: unknown): v is RenderPresetId {
   return typeof v === "string" && v in RENDER_PRESETS;
@@ -20,19 +40,30 @@ function hasInlineImageData(
   return typeof p.inlineData?.data === "string" && p.inlineData.data.length > 0;
 }
 
+type GenConfig = {
+  responseModalities: ("TEXT" | "IMAGE")[];
+  imageConfig?: {
+    aspectRatio?: "1:1" | "4:3" | "16:9";
+    imageSize?: "1K" | "2K" | "4K";
+  };
+};
+
+type TextPartLike = { text?: unknown };
+
 export async function POST(req: Request) {
   try {
+    const ai = getAi(); // ✅ só cria aqui (runtime), não no import
+
     const formData = await req.formData();
 
     const file = formData.get("image") as File | null;
     const userPrompt = (formData.get("prompt") as string | null) ?? "";
-    const presetIdRaw = formData.get("presetId"); // ✅ vem do front
+    const presetIdRaw = formData.get("presetId");
 
     if (!file) {
       return NextResponse.json({ error: "Imagem obrigatória" }, { status: 400 });
     }
 
-    // ✅ fallback seguro
     const presetId: RenderPresetId = isPresetId(presetIdRaw)
       ? presetIdRaw
       : "daylight_9am";
@@ -43,7 +74,9 @@ export async function POST(req: Request) {
 
     const finalPrompt = [
       preset.systemPrompt,
-      userPrompt?.trim() ? `\n\nPEDIDOS DO USUÁRIO:\n${userPrompt.trim()}` : "",
+      userPrompt?.trim()
+        ? `\n\nPEDIDOS DO USUÁRIO:\n${userPrompt.trim()}`
+        : "",
     ].join("");
 
     const contents = [
@@ -56,39 +89,29 @@ export async function POST(req: Request) {
       },
     ];
 
-    type GenConfig = {
-        responseModalities: ("TEXT" | "IMAGE")[];
-        imageConfig?: {
-            aspectRatio?: "1:1" | "4:3" | "16:9";
-            imageSize?: "1K" | "2K" | "4K";
-        };
-        };
+    const config: GenConfig = {
+      responseModalities: ["TEXT", "IMAGE"],
+      imageConfig: {
+        aspectRatio: preset.aspectRatio ?? "16:9",
+        imageSize: preset.imageSize ?? "2K",
+      },
+    };
 
-        const config: GenConfig = {
-        responseModalities: ["TEXT", "IMAGE"],
-        imageConfig: {
-            aspectRatio: preset.aspectRatio ?? "16:9",
-            imageSize: preset.imageSize ?? "2K",
-        },
-        };
-
-        const response = await ai.models.generateContent({
-        model: preset.model ?? "gemini-3-pro-image-preview",
-        contents,
-        config,
-        });
+    const response = await ai.models.generateContent({
+      model: preset.model ?? "gemini-3-pro-image-preview",
+      contents,
+      config,
+    });
 
     const parts = response.candidates?.[0]?.content?.parts ?? [];
     const imgPart = parts.find(hasInlineImageData);
 
-    type TextPartLike = { text?: unknown };
-
-
     if (!imgPart) {
-      const text = parts
-    .map((p) => (p as TextPartLike).text)
-    .filter((t): t is string => typeof t === "string" && t.length > 0)
-    .join("\n") || null;
+      const text =
+        parts
+          .map((p) => (p as TextPartLike).text)
+          .filter((t): t is string => typeof t === "string" && t.length > 0)
+          .join("\n") || null;
 
       return NextResponse.json(
         { error: "Modelo não retornou imagem", text },
@@ -100,8 +123,12 @@ export async function POST(req: Request) {
       image: imgPart.inlineData.data,
       presetId,
     });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Erro na renderização IA" }, { status: 500 });
-  }
+  } catch (error: unknown) {
+  console.error(error);
+
+  const message = getErrorMessage(error);
+
+  return NextResponse.json({ error: message }, { status: 500 });
+}
+
 }
