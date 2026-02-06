@@ -8,12 +8,7 @@ export const dynamic = "force-dynamic";
 
 function getAi() {
   const apiKey = process.env.GEMINI_API_KEY;
-
-  if (!apiKey) {
-    // não quebra build; vira erro controlado em runtime
-    throw new Error("GEMINI_API_KEY não configurada no servidor.");
-  }
-
+  if (!apiKey) throw new Error("GEMINI_API_KEY não configurada no servidor.");
   return new GoogleGenAI({ apiKey });
 }
 
@@ -52,12 +47,12 @@ type TextPartLike = { text?: unknown };
 
 export async function POST(req: Request) {
   try {
-    const ai = getAi(); // ✅ só cria aqui (runtime), não no import
+    const ai = getAi();
 
     const formData = await req.formData();
 
     const file = formData.get("image") as File | null;
-    const userPrompt = (formData.get("prompt") as string | null) ?? "";
+    const userPrompt = ((formData.get("prompt") as string | null) ?? "").trim();
     const presetIdRaw = formData.get("presetId");
 
     if (!file) {
@@ -72,12 +67,25 @@ export async function POST(req: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer()).toString("base64");
 
+    const requestText = userPrompt || "Improve realism only. Do not add new objects.";
+
     const finalPrompt = [
-      preset.systemPrompt,
-      userPrompt?.trim()
-        ? `\n\nPEDIDOS DO USUÁRIO:\n${userPrompt.trim()}`
-        : "",
-    ].join("");
+      preset.systemPrompt.trim(),
+      "",
+      "You are an image editor. Your job is to apply ONLY the requested change(s) and keep everything else IDENTICAL.",
+      "",
+      "HARD CONSTRAINTS:",
+      "- Keep camera, perspective, framing, geometry, furniture, textures, and all objects exactly the same.",
+      "- Do NOT change the room layout, walls, floor, ceiling, windows, curtains, TV, plants, lighting style (unless requested), or background.",
+      "- No new decor unless explicitly requested.",
+      "- Apply minimal pixel changes necessary to satisfy the request.",
+      "- If the request conflicts with constraints, do the closest minimal edit.",
+      "",
+      "REQUEST:",
+      requestText,
+      "",
+      "Return IMAGE only.",
+    ].join("\n");
 
     const contents = [
       { text: finalPrompt },
@@ -124,11 +132,8 @@ export async function POST(req: Request) {
       presetId,
     });
   } catch (error: unknown) {
-  console.error(error);
-
-  const message = getErrorMessage(error);
-
-  return NextResponse.json({ error: message }, { status: 500 });
-}
-
+    console.error(error);
+    const message = getErrorMessage(error);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

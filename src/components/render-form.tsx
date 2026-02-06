@@ -5,6 +5,16 @@ import Image from "next/image";
 import { Check, ImagePlus, Trash2, Wand2 } from "lucide-react";
 import { RENDER_PRESETS, type RenderPresetId } from "@/lib/render-presets";
 
+
+function base64ToFile(base64: string, filename = "render.png") {
+  const byteString = atob(base64);
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+  return new File([ab], filename, { type: "image/png" });
+}
+
+
 export default function RenderForm() {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -13,6 +23,8 @@ export default function RenderForm() {
   const [prompt, setPrompt] = useState("");
   const [presetId, setPresetId] = useState<RenderPresetId>("daylight_9am");
   const [loading, setLoading] = useState(false);
+  const [baseImage, setBaseImage] = useState<File | null>(null);
+
 
   useEffect(() => {
     return () => {
@@ -22,6 +34,7 @@ export default function RenderForm() {
 
   function setFile(file: File) {
     setImage(file);
+    setBaseImage(file);
 
     setPreview((prev) => {
       if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
@@ -59,7 +72,7 @@ export default function RenderForm() {
     setLoading(true);
     try {
       const formData = new FormData();
-      formData.append("image", image);
+      formData.append("image", baseImage ?? image);
       formData.append("prompt", prompt);
       formData.append("presetId", presetId);
 
@@ -73,6 +86,9 @@ export default function RenderForm() {
 
       if (data.image) {
         setPreview(`data:image/png;base64,${data.image}`);
+
+        setBaseImage(base64ToFile(data.image, "render.png"));
+
 
         setTimeout(() => {
           promptRef.current?.focus();
