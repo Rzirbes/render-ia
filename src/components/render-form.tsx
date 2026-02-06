@@ -202,7 +202,7 @@ export default function RenderForm() {
         </section>
 
       {/* Card: Prompt */}
-      {/*  <section className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl space-y-3">
+        <section className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl space-y-3">
           <div>
             <p className="font-semibold text-zinc-50">Prompt</p>
             <p className="text-xs text-zinc-300">
@@ -217,7 +217,7 @@ export default function RenderForm() {
             onChange={(e) => setPrompt(e.target.value)}
           />
         </section>
-*/}
+
         {/* CTA */}
         <button
           onClick={handleGenerate}
