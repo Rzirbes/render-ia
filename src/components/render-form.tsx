@@ -73,6 +73,10 @@ export default function RenderForm() {
 
       if (data.image) {
         setPreview(`data:image/png;base64,${data.image}`);
+
+        setTimeout(() => {
+          promptRef.current?.focus();
+        }, 100);
       } else {
         alert("Modelo não retornou imagem.");
       }
@@ -80,6 +84,9 @@ export default function RenderForm() {
       setLoading(false);
     }
   }
+
+  const promptRef = useRef<HTMLTextAreaElement | null>(null);
+
 
   const presetEntries = useMemo(
     () => (Object.keys(RENDER_PRESETS) as RenderPresetId[]).map((id) => [id, RENDER_PRESETS[id]] as const),
@@ -202,21 +209,13 @@ export default function RenderForm() {
         </section>
 
       {/* Card: Prompt */}
-        <section className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl space-y-3">
-          <div>
-            <p className="font-semibold text-zinc-50">Prompt</p>
-            <p className="text-xs text-zinc-300">
-              Ex: “Render fotorealista, iluminação sunset, materiais modernos, vegetação tropical, lente 24mm…”
-            </p>
-          </div>
-
-          <textarea
-            placeholder="Descreva o render..."
-            className="w-full border border-white/10 bg-black/30 text-zinc-50 rounded-2xl p-4 resize-none h-32 outline-none focus:ring-2 focus:ring-white/20"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-          />
-        </section>
+        <textarea
+          ref={promptRef}
+          placeholder="Descreva o render..."
+          className="w-full border border-white/10 bg-black/30 text-zinc-50 rounded-2xl p-4 resize-none h-32 outline-none focus:ring-2 focus:ring-white/20"
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+        />
 
         {/* CTA */}
         <button
