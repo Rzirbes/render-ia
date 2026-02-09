@@ -113,7 +113,7 @@ export default function RenderForm() {
     <main className="min-h-screen flex items-center justify-center p-6 bg-zinc-950">
       <div className="w-full max-w-4xl space-y-6">
         <header className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-zinc-50">Render IA CurvaCursos</h1>
+          <h1 className="text-3xl font-bold text-zinc-50">Render CurvaCursos</h1>
           <p className="text-sm text-zinc-300">
             Envie uma foto e escolha um preset do render.
           </p>
