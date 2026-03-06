@@ -1,7 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 import type { Part } from "@google/genai";
-import { RENDER_PRESETS, type RenderPresetId } from "@/lib/render-presets";
+import {
+  RENDER_PRESETS,
+  type RenderPresetId,
+} from "@/features/render/server/render-presets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +32,7 @@ function isPresetId(v: unknown): v is RenderPresetId {
 type InlineDataLike = { inlineData?: { data?: unknown; mimeType?: unknown } };
 
 function hasInlineImageData(
-  part: Part
+  part: Part,
 ): part is Part & { inlineData: { data: string; mimeType?: string } } {
   const p = part as unknown as InlineDataLike;
   return typeof p.inlineData?.data === "string" && p.inlineData.data.length > 0;
@@ -56,7 +59,10 @@ export async function POST(req: Request) {
     const presetIdRaw = formData.get("presetId");
 
     if (!file) {
-      return NextResponse.json({ error: "Imagem obrigatória" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Imagem obrigatória" },
+        { status: 400 },
+      );
     }
 
     const presetId: RenderPresetId = isPresetId(presetIdRaw)
@@ -67,7 +73,8 @@ export async function POST(req: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer()).toString("base64");
 
-    const requestText = userPrompt || "Improve realism only. Do not add new objects.";
+    const requestText =
+      userPrompt || "Improve realism only. Do not add new objects.";
 
     const finalPrompt = [
       preset.systemPrompt.trim(),
@@ -123,7 +130,7 @@ export async function POST(req: Request) {
 
       return NextResponse.json(
         { error: "Modelo não retornou imagem", text },
-        { status: 502 }
+        { status: 502 },
       );
     }
 

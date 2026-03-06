@@ -227,7 +227,7 @@ Lighting preset: Daylight 9AM, neutral natural light, soft realistic shadows, hi
   blue_hour: {
     label: "Blue Hour",
     systemPrompt: `
-    
+
 YYou are an architectural render finisher.
 
 STRICT RULES:
