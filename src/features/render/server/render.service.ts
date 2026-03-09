@@ -3,6 +3,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import type {
   CreateRenderPayload,
+  EditRenderPayload,
   ListRendersResponse,
   RenderItem,
   UploadRenderImageResponse,
@@ -152,5 +153,20 @@ export async function deleteRender(id: string): Promise<{ ok: true }> {
   return parseApiResponse<{ ok: true }>(
     response,
     "Não foi possível remover o render.",
+  );
+}
+
+export async function editRender(
+  id: string,
+  payload: EditRenderPayload,
+): Promise<RenderItem> {
+  const response = await apiRenderFetch(`/renders/${id}/edit`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  return parseApiResponse<RenderItem>(
+    response,
+    "Não foi possível editar o render.",
   );
 }

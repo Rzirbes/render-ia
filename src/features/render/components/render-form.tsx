@@ -11,6 +11,7 @@ import {
   uploadRenderImageService,
 } from "../client/render.service";
 import { getRenderStatus } from "../utils/render-status";
+import Image from "next/image";
 
 type FormStatus =
   | "idle"
@@ -108,7 +109,7 @@ export default function RenderForm() {
       {previewSrc ? (
         <div className="rounded-lg border border-zinc-800 p-4">
           <p className="mb-3 text-sm text-zinc-400">Pré-visualização</p>
-          <img
+          <Image
             src={previewSrc}
             alt="Imagem selecionada"
             className="w-full rounded-xl border border-zinc-800 object-cover"
@@ -170,7 +171,7 @@ export default function RenderForm() {
           })()}
 
           {generatedImageSrc ? (
-            <img
+            <Image
               src={generatedImageSrc}
               alt="Render gerado"
               className="mt-4 w-full rounded-xl border border-zinc-800 object-cover"

@@ -1,5 +1,6 @@
 import type {
   CreateRenderPayload,
+  EditRenderPayload,
   ListRendersResponse,
   RenderItem,
   UploadRenderImageResponse,
@@ -104,4 +105,19 @@ export async function deleteRenderService(id: string): Promise<{ ok: true }> {
   });
 
   return parseResponse<{ ok: true }>(response, "Erro ao remover render.");
+}
+
+export async function editRenderService(
+  id: string,
+  payload: EditRenderPayload,
+): Promise<RenderItem> {
+  const response = await fetch(`/api/renders/${id}/edit`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return parseResponse<RenderItem>(response, "Erro ao editar render.");
 }

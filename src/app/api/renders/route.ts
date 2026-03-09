@@ -8,16 +8,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const render = await createRender({
-      originalImageUrl: body.originalImageUrl,
-      originalImagePath: body.originalImagePath,
-      originalImageMimeType: body.originalImageMimeType,
-      presetId: body.presetId,
-      prompt: body.prompt,
-      creditsToUse: body.creditsToUse,
-      clientRequestId: body.clientRequestId,
-    });
-
     if (
       !body.originalImageUrl ||
       !body.originalImagePath ||
@@ -28,6 +18,16 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    const render = await createRender({
+      originalImageUrl: body.originalImageUrl,
+      originalImagePath: body.originalImagePath,
+      originalImageMimeType: body.originalImageMimeType,
+      presetId: body.presetId,
+      prompt: body.prompt,
+      creditsToUse: body.creditsToUse,
+      clientRequestId: body.clientRequestId,
+    });
 
     return NextResponse.json(render, { status: 201 });
   } catch (error) {

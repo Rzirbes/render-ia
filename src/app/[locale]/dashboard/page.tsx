@@ -1,10 +1,10 @@
-import RenderForm from "@/features/render/components/render-form";
 import { RendersHistory } from "@/features/render/components/renders-history";
 import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { getCurrentUser } from "@/features/auth/server/auth-session";
 
 import { IconCoins, IconCrown, IconPhoto } from "@tabler/icons-react";
+import RenderCreateForm from "@/features/render/components/render-create-form";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -87,7 +87,7 @@ export default async function DashboardPage() {
                   </p>
                 </div>
 
-                <RenderForm />
+                <RenderCreateForm />
               </Card>
 
               {/* Recent renders */}

@@ -1,3 +1,5 @@
+import { FormStatus } from "react-dom";
+
 export type RenderPresetId = "daylight_9am" | "blue_hour";
 
 export type RenderStatus = "PENDING" | "PROCESSING" | "DONE" | "ERROR";
@@ -11,8 +13,6 @@ export type CreateRenderPayload = {
   clientRequestId?: string;
   originalImageMimeType?: string;
 };
-
-
 
 export type RenderItem = {
   id: string;
@@ -75,4 +75,16 @@ export type UploadRenderImageResponse = {
   url: string;
   path: string;
   mimeType: string;
+};
+
+export type RenderActionParams = {
+  presetId: RenderPresetId;
+  setStatus: React.Dispatch<React.SetStateAction<FormStatus>>;
+  setResult: React.Dispatch<React.SetStateAction<RenderItem | null>>;
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
+};
+
+export type EditRenderPayload = {
+  prompt?: string;
+  presetId?: RenderPresetId;
 };

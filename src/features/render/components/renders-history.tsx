@@ -20,7 +20,12 @@ export function RendersHistory() {
     async function load() {
       try {
         setError(null);
+
         const data = await listRendersService();
+
+        console.log("RENDERS HISTORY RESPONSE:", data);
+        console.log("RENDERS HISTORY ITEMS:", data.items);
+
         setRenders(data.items ?? []);
       } catch (err) {
         console.error("Erro ao carregar renders", err);
