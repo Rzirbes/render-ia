@@ -1,279 +1,187 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
-import { Check, ImagePlus, Trash2, Wand2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import type {
+  RenderItem,
+  RenderPresetId,
+} from "@/features/render/types/render.types";
 import {
-  RENDER_PRESETS,
-  type RenderPresetId,
-} from "@/features/render/server/render-presets";
+  createRenderService,
+  processRenderService,
+  uploadRenderImageService,
+} from "../client/render.service";
+import { getRenderStatus } from "../utils/render-status";
 
-function base64ToFile(base64: string, filename = "render.png") {
-  const byteString = atob(base64);
-  const ab = new ArrayBuffer(byteString.length);
-  const ia = new Uint8Array(ab);
-  for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-  return new File([ab], filename, { type: "image/png" });
-}
+type FormStatus =
+  | "idle"
+  | "uploading"
+  | "creating"
+  | "processing"
+  | "done"
+  | "error";
 
 export default function RenderForm() {
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  const [image, setImage] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [presetId, setPresetId] = useState<RenderPresetId>("daylight_9am");
-  const [loading, setLoading] = useState(false);
-  const [baseImage, setBaseImage] = useState<File | null>(null);
+  const [prompt, setPrompt] = useState("");
+  const [status, setStatus] = useState<FormStatus>("idle");
+  const [result, setResult] = useState<RenderItem | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
+
+  const previewSrc = useMemo(() => {
+    if (!file) return null;
+    return URL.createObjectURL(file);
+  }, [file]);
 
   useEffect(() => {
     return () => {
-      if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
+      if (previewSrc) {
+        URL.revokeObjectURL(previewSrc);
+      }
     };
-  }, [preview]);
+  }, [previewSrc]);
 
-  function setFile(file: File) {
-    setImage(file);
-    setBaseImage(file);
+  const generatedImageSrc = result?.generatedImageUrl
+    ? result.generatedImageUrl.startsWith("http")
+      ? result.generatedImageUrl
+      : `${apiUrl}${result.generatedImageUrl}`
+    : null;
 
-    setPreview((prev) => {
-      if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
-      return URL.createObjectURL(file);
-    });
-  }
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
 
-  function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setFile(file);
-  }
-
-  function handlePickImage() {
-    inputRef.current?.click();
-  }
-
-  function handleRemoveImage() {
-    setImage(null);
-
-    setPreview((prev) => {
-      if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
-      return null;
-    });
-
-    if (inputRef.current) inputRef.current.value = "";
-  }
-
-  async function handleGenerate() {
-    if (!image) {
-      alert("Selecione uma imagem primeiro.");
+    if (!file) {
+      setError("Selecione uma imagem antes de gerar o render.");
+      setStatus("error");
       return;
     }
 
-    setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append("image", baseImage ?? image);
-      formData.append("prompt", prompt);
-      formData.append("presetId", presetId);
+      setError(null);
+      setResult(null);
 
-      const res = await fetch("/api/render", {
-        method: "POST",
-        body: formData,
+      setStatus("uploading");
+      const uploaded = await uploadRenderImageService(file);
+
+      setStatus("creating");
+      const created = await createRenderService({
+        originalImageUrl: uploaded.url,
+        originalImagePath: uploaded.path,
+        originalImageMimeType: uploaded.mimeType,
+        presetId,
+        prompt: prompt || undefined,
       });
-      const data = await res.json().catch(() => ({}));
 
-      if (!res.ok) {
-        alert(data?.error ?? "Erro ao gerar render.");
-        return;
-      }
+      setStatus("processing");
+      const processed = await processRenderService(created.id);
 
-      if (data.image) {
-        setPreview(`data:image/png;base64,${data.image}`);
-
-        setBaseImage(base64ToFile(data.image, "render.png"));
-
-        setTimeout(() => {
-          promptRef.current?.focus();
-        }, 100);
-      } else {
-        alert("Modelo não retornou imagem.");
-      }
-    } finally {
-      setLoading(false);
+      setResult(processed);
+      setStatus("done");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Erro ao processar render.",
+      );
+      setStatus("error");
     }
   }
 
-  const promptRef = useRef<HTMLTextAreaElement | null>(null);
-
-  const presetEntries = useMemo(
-    () =>
-      (Object.keys(RENDER_PRESETS) as RenderPresetId[]).map(
-        (id) => [id, RENDER_PRESETS[id]] as const,
-      ),
-    [],
-  );
+  const isSubmitting =
+    status === "uploading" || status === "creating" || status === "processing";
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6 bg-zinc-950">
-      <div className="w-full max-w-4xl space-y-6">
-        <header className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-zinc-50">
-            Render CurvaCursos
-          </h1>
-          <p className="text-sm text-zinc-300">
-            Envie uma foto e escolha um preset do render.
-          </p>
-        </header>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="mb-1 block text-sm">Imagem</label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            const selectedFile = e.target.files?.[0] ?? null;
+            setFile(selectedFile);
+          }}
+          className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
+        />
+      </div>
 
-        {/* Card: Upload + Preview */}
-        <section className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl space-y-4">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-2">
-              <div className="size-10 rounded-xl bg-white/10 grid place-items-center border border-white/10">
-                <ImagePlus className="size-5 text-zinc-100" />
-              </div>
-              <div>
-                <p className="font-semibold text-zinc-50">Imagem</p>
-                <p className="text-xs text-zinc-300">
-                  JPG/PNG/WebP • até onde sua API aceitar
-                </p>
-              </div>
-            </div>
+      {previewSrc ? (
+        <div className="rounded-lg border border-zinc-800 p-4">
+          <p className="mb-3 text-sm text-zinc-400">Pré-visualização</p>
+          <img
+            src={previewSrc}
+            alt="Imagem selecionada"
+            className="w-full rounded-xl border border-zinc-800 object-cover"
+          />
+        </div>
+      ) : null}
 
-            <div className="flex items-center gap-2">
-              {/* input escondido e controlado */}
-              <input
-                ref={inputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImage}
-                className="hidden"
-              />
+      <div>
+        <label className="mb-1 block text-sm">Preset</label>
+        <select
+          value={presetId}
+          onChange={(e) => setPresetId(e.target.value as RenderPresetId)}
+          className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2"
+        >
+          <option value="daylight_9am">Daylight 9AM</option>
+          <option value="blue_hour">Blue Hour</option>
+        </select>
+      </div>
 
-              <button
-                type="button"
-                onClick={handlePickImage}
-                className="px-4 py-2 rounded-xl bg-zinc-50 text-zinc-900 font-semibold hover:opacity-90 transition"
-              >
-                {preview ? "Alterar foto" : "Selecionar foto"}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleRemoveImage}
-                disabled={!preview}
-                className="px-4 py-2 rounded-xl border border-white/15 text-zinc-100 hover:bg-white/10 transition disabled:opacity-40 disabled:hover:bg-transparent inline-flex items-center gap-2"
-              >
-                <Trash2 className="size-4" />
-                Remover
-              </button>
-            </div>
-          </div>
-
-          {preview ? (
-            <div className="space-y-3">
-              <div className="relative w-full h-[420px] rounded-2xl overflow-hidden border border-white/10 bg-black/30">
-                <Image
-                  src={preview}
-                  alt="preview"
-                  fill
-                  className="object-contain"
-                  unoptimized
-                />
-              </div>
-
-              <div className="text-xs text-zinc-300">
-                {loading
-                  ? "Gerando render..."
-                  : image
-                    ? `Arquivo selecionado: ${image.name}`
-                    : "Preview atual"}
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-white/15 bg-white/5 p-10 text-center text-zinc-300">
-              Clique em{" "}
-              <span className="text-zinc-50 font-semibold">
-                Selecionar foto
-              </span>{" "}
-              para começar.
-            </div>
-          )}
-        </section>
-
-        {/* Card: Presets */}
-        <section className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-6 shadow-xl space-y-3">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div>
-              <p className="font-semibold text-zinc-50">Preset</p>
-              <p className="text-xs text-zinc-300">
-                Escolha uma iluminação base.
-              </p>
-            </div>
-            <span className="text-xs text-zinc-300">
-              Selecionado:{" "}
-              <span className="text-zinc-50 font-semibold">
-                {RENDER_PRESETS[presetId].label}
-              </span>
-            </span>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {presetEntries.map(([id, preset]) => {
-              const selected = presetId === id;
-
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setPresetId(id)}
-                  className={[
-                    "px-3 py-2 rounded-2xl border transition inline-flex items-center gap-2",
-                    "text-sm",
-                    selected
-                      ? "bg-zinc-50 text-zinc-900 border-zinc-50 ring-2 ring-zinc-200/40"
-                      : "border-white/15 text-zinc-100 hover:bg-white/10",
-                  ].join(" ")}
-                >
-                  {selected ? (
-                    <Check className="size-4" />
-                  ) : (
-                    <span className="size-4" />
-                  )}
-                  {preset.label}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Card: Prompt */}
+      <div>
+        <label className="mb-1 block text-sm">Prompt adicional</label>
         <textarea
-          ref={promptRef}
-          placeholder="Descreva o render..."
-          className="w-full border border-white/10 bg-black/30 text-zinc-50 rounded-2xl p-4 resize-none h-32 outline-none focus:ring-2 focus:ring-white/20"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
+          placeholder="Opcional"
+          className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2"
+          rows={4}
         />
-
-        {/* CTA */}
-        <button
-          onClick={handleGenerate}
-          disabled={loading || !image}
-          className="w-full rounded-2xl py-3 font-semibold transition inline-flex items-center justify-center gap-2
-                     bg-zinc-50 text-zinc-900 hover:opacity-90
-                     disabled:opacity-50 disabled:hover:opacity-50"
-        >
-          <Wand2 className="size-5" />
-          {loading ? "Gerando..." : "Gerar Render IA"}
-        </button>
-
-        {!image && (
-          <p className="text-center text-xs text-zinc-400">
-            Selecione uma foto para liberar o botão de gerar.
-          </p>
-        )}
       </div>
-    </main>
+
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="rounded-lg bg-violet-600 px-4 py-2 text-white disabled:opacity-50"
+      >
+        {status === "uploading"
+          ? "Enviando imagem..."
+          : status === "creating"
+            ? "Criando..."
+            : status === "processing"
+              ? "Processando..."
+              : "Gerar render"}
+      </button>
+
+      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+
+      {result ? (
+        <div className="rounded-lg border border-zinc-800 p-4">
+          {(() => {
+            const statusInfo = getRenderStatus(result.status);
+            const Icon = statusInfo.icon;
+
+            return (
+              <div className="flex items-center gap-2 text-sm text-zinc-300">
+                <Icon size={18} />
+                <span>{statusInfo.label}</span>
+              </div>
+            );
+          })()}
+
+          {generatedImageSrc ? (
+            <img
+              src={generatedImageSrc}
+              alt="Render gerado"
+              className="mt-4 w-full rounded-xl border border-zinc-800 object-cover"
+            />
+          ) : null}
+
+          {result.errorMessage ? (
+            <p className="mt-2 text-sm text-red-400">{result.errorMessage}</p>
+          ) : null}
+        </div>
+      ) : null}
+    </form>
   );
 }

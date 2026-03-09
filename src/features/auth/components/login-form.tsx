@@ -34,7 +34,7 @@ export function LoginForm({ locale }: LoginFormProps) {
     try {
       setServerError(null);
 
-      const response = await fetch(`/${locale}/api/auth/login`, {
+      const response = await fetch(`/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

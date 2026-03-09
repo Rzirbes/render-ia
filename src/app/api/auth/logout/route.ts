@@ -1,16 +1,11 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
 
-  cookieStore.set("token", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-  });
+  cookieStore.delete("token");
 
-  return NextResponse.json({ success: true });
+  return NextResponse.redirect(new URL("/login", request.url));
 }

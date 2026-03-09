@@ -38,3 +38,23 @@ export type RegisterRequest = {
   email: string;
   password: string;
 };
+
+export type CurrentUser = {
+  id: string;
+  name?: string | null;
+  email: string;
+  credits: number;
+  createdAt: string;
+};
+
+export type MeResponse = {
+  user: CurrentUser;
+  accessToken: string;
+};
+
+export type DashboardLayoutProps = {
+  children: React.ReactNode;
+  params: Promise<{
+    locale: string;
+  }>;
+};
