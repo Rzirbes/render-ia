@@ -1,28 +1,30 @@
-import { getCurrentUser } from "@/features/auth/server/auth-session";
+"use client";
+
+import { useCurrentUser } from "@/features/auth/hooks/use-current-user";
 import { IconBolt, IconCoins, IconUser } from "@tabler/icons-react";
 
-export default async function AppHeader() {
-  const user = await getCurrentUser();
+export default function AppHeader() {
+  const { user, isLoading } = useCurrentUser();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-        {/* Logo */}
         <div className="flex items-center gap-2 font-semibold text-text-primary">
           <IconBolt size={22} className="text-brand" />
           <span>RenderIA</span>
         </div>
 
-        {/* User area */}
         <div className="flex items-center gap-4 text-sm text-text-secondary">
-          {user ? (
+          {isLoading ? (
+            <span className="text-text-muted">Carregando...</span>
+          ) : user ? (
             <>
               <div className="flex items-center gap-2">
                 <IconUser size={18} />
                 <span>{user.email}</span>
               </div>
 
-              <div className="flex items-center gap-1 rounded-lg bg-surface px-3 py-1 border border-border">
+              <div className="flex items-center gap-1 rounded-lg border border-border bg-surface px-3 py-1">
                 <IconCoins size={16} className="text-brand" />
                 <span className="text-text-primary">{user.credits}</span>
               </div>

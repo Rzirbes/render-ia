@@ -3,15 +3,11 @@
 import { Card } from "@/components/ui/card";
 import { IconCoins, IconCrown, IconPhoto } from "@tabler/icons-react";
 import { useCurrentUser } from "@/features/auth/hooks/use-current-user";
+import { useRenders } from "@/features/render/hooks/use-renders";
 
-type Props = {
-  totalRenders: number;
-};
-
-export default function DashboardStats({ totalRenders }: Props) {
-  const { user, isLoading, error } = useCurrentUser();
-
-  console.log({ user, isLoading, error });
+export default function DashboardStats() {
+  const { user, isLoading } = useCurrentUser();
+  const { totalRenders, isLoading: isLoadingRenders } = useRenders();
 
   return (
     <section className="grid gap-4 md:grid-cols-3">
@@ -50,7 +46,9 @@ export default function DashboardStats({ totalRenders }: Props) {
           <div className="flex flex-col gap-1">
             <span className="text-sm text-muted">Total de renders</span>
 
-            <strong className="text-2xl text-foreground">{totalRenders}</strong>
+            <strong className="text-2xl text-foreground">
+              {isLoadingRenders ? "..." : totalRenders}
+            </strong>
           </div>
 
           <div className="rounded-xl border border-border bg-background p-3">

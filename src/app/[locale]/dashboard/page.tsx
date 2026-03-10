@@ -1,8 +1,12 @@
 import { Container } from "@/components/ui/container";
 import DashboardStats from "@/features/dashboard/components/dashboard-stats";
 import RenderDashboardClient from "@/features/render/components/render-dashboard-client";
+import { listRenders } from "@/features/render/server/render.service";
 
 export default async function DashboardPage() {
+  const rendersResponse = await listRenders(1, 10);
+  const totalRenders = rendersResponse.total ?? 0;
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="py-8 md:py-10">
@@ -18,9 +22,9 @@ export default async function DashboardPage() {
               </p>
             </section>
 
-            <DashboardStats totalRenders={0} />
+            <DashboardStats />
 
-            <RenderDashboardClient totalRenders={0} />
+            <RenderDashboardClient totalRenders={totalRenders} />
           </div>
         </Container>
       </main>
