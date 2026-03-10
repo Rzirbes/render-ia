@@ -17,7 +17,7 @@ export default async function LoginPage({ params }: PageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-4 py-10 text-white">
+    <main className="min-h-screen bg-background px-4 py-10 text-foreground">
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-md items-center">
         <LoginForm locale={locale} />
       </div>

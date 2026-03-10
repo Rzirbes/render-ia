@@ -8,13 +8,26 @@ import {
   RenderHistoryLoading,
 } from "./render-history-states";
 import { RenderHistoryList } from "./render-history-list";
-import { RenderItemList } from "../types/render.types";
-import { listRendersService } from "../client/render.service";
+import { RenderItem, RenderItemList } from "../types/render.types";
+import { getRenderService, listRendersService } from "../client/render.service";
 
-export function RendersHistory() {
+type Props = {
+  onOpenRender: (render: RenderItem) => void;
+};
+
+export function RendersHistory({ onOpenRender }: Props) {
   const [renders, setRenders] = useState<RenderItemList[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  async function handleOpenRender(id: string) {
+    try {
+      const render = await getRenderService(id);
+      onOpenRender(render);
+    } catch (err) {
+      console.error("Erro ao abrir render", err);
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -22,10 +35,6 @@ export function RendersHistory() {
         setError(null);
 
         const data = await listRendersService();
-
-        console.log("RENDERS HISTORY RESPONSE:", data);
-        console.log("RENDERS HISTORY ITEMS:", data.items);
-
         setRenders(data.items ?? []);
       } catch (err) {
         console.error("Erro ao carregar renders", err);
@@ -50,5 +59,5 @@ export function RendersHistory() {
     return <RenderHistoryEmpty />;
   }
 
-  return <RenderHistoryList renders={renders} />;
+  return <RenderHistoryList renders={renders} onOpen={handleOpenRender} />;
 }

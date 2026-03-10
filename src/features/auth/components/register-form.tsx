@@ -58,17 +58,17 @@ export function RegisterForm({ locale }: RegisterFormProps) {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-lg"
+      className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-lg"
     >
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold text-white">Criar conta</h1>
-        <p className="text-sm text-zinc-400">
+        <h1 className="text-2xl font-semibold text-foreground">Criar conta</h1>
+        <p className="text-sm text-muted">
           Cadastre-se para começar a usar o RenderIA
         </p>
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="name" className="text-sm text-zinc-200">
+        <label htmlFor="name" className="text-sm text-foreground">
           Nome
         </label>
         <input
@@ -76,15 +76,15 @@ export function RegisterForm({ locale }: RegisterFormProps) {
           type="text"
           placeholder="Seu nome"
           {...register("name")}
-          className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none transition focus:border-zinc-500"
+          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground outline-none transition placeholder:text-muted focus:border-primary"
         />
         {errors.name && (
-          <p className="text-sm text-red-400">{errors.name.message}</p>
+          <p className="text-sm text-error">{errors.name.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="email" className="text-sm text-zinc-200">
+        <label htmlFor="email" className="text-sm text-foreground">
           E-mail
         </label>
         <input
@@ -92,15 +92,15 @@ export function RegisterForm({ locale }: RegisterFormProps) {
           type="email"
           placeholder="seuemail@exemplo.com"
           {...register("email")}
-          className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none transition focus:border-zinc-500"
+          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground outline-none transition placeholder:text-muted focus:border-primary"
         />
         {errors.email && (
-          <p className="text-sm text-red-400">{errors.email.message}</p>
+          <p className="text-sm text-error">{errors.email.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="password" className="text-sm text-zinc-200">
+        <label htmlFor="password" className="text-sm text-foreground">
           Senha
         </label>
         <input
@@ -108,15 +108,15 @@ export function RegisterForm({ locale }: RegisterFormProps) {
           type="password"
           placeholder="Mínimo de 8 caracteres"
           {...register("password")}
-          className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none transition focus:border-zinc-500"
+          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground outline-none transition placeholder:text-muted focus:border-primary"
         />
         {errors.password && (
-          <p className="text-sm text-red-400">{errors.password.message}</p>
+          <p className="text-sm text-error">{errors.password.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="confirmPassword" className="text-sm text-zinc-200">
+        <label htmlFor="confirmPassword" className="text-sm text-foreground">
           Confirmar senha
         </label>
         <input
@@ -124,17 +124,15 @@ export function RegisterForm({ locale }: RegisterFormProps) {
           type="password"
           placeholder="Repita sua senha"
           {...register("confirmPassword")}
-          className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none transition focus:border-zinc-500"
+          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground outline-none transition placeholder:text-muted focus:border-primary"
         />
         {errors.confirmPassword && (
-          <p className="text-sm text-red-400">
-            {errors.confirmPassword.message}
-          </p>
+          <p className="text-sm text-error">{errors.confirmPassword.message}</p>
         )}
       </div>
 
       {serverError && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+        <div className="rounded-xl border border-error bg-error-soft px-4 py-3 text-sm text-error">
           {serverError}
         </div>
       )}
@@ -142,16 +140,16 @@ export function RegisterForm({ locale }: RegisterFormProps) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-xl bg-white px-4 py-3 font-medium text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-foreground transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSubmitting ? "Criando conta..." : "Cadastrar"}
       </button>
 
-      <div className="text-center text-sm text-zinc-400">
+      <div className="text-center text-sm text-muted">
         Já tem conta?{" "}
         <Link
           href={`/${locale}/login`}
-          className="font-medium text-white hover:underline"
+          className="font-medium text-primary transition hover:text-primary-hover"
         >
           Entrar
         </Link>

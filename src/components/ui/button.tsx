@@ -17,12 +17,12 @@ export function Button({
         "disabled:opacity-50 disabled:cursor-not-allowed",
 
         {
-          "bg-brand hover:bg-brand-hover text-white": variant === "primary",
+          "bg-primary hover:bg-primary-hover text-white": variant === "primary",
 
-          "bg-surface hover:bg-zinc-800 border border-border text-text-primary":
+          "bg-card hover:bg-zinc-900 border border-border text-foreground":
             variant === "secondary",
 
-          "hover:bg-surface text-text-secondary": variant === "ghost",
+          "hover:bg-card text-muted": variant === "ghost",
         },
 
         className,

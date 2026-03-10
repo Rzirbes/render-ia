@@ -94,7 +94,7 @@ export default function RenderFormBase({
     <form onSubmit={handleSubmit} className="space-y-4">
       {allowFileUpload ? (
         <div>
-          <label className="mb-1 block text-sm">Imagem</label>
+          <label className="mb-1 block text-sm text-text-primary">Imagem</label>
           <input
             type="file"
             accept="image/*"
@@ -102,18 +102,18 @@ export default function RenderFormBase({
               const selectedFile = e.target.files?.[0] ?? null;
               setFile(selectedFile);
             }}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-sm file:text-white hover:file:bg-primary-hover"
           />
         </div>
       ) : null}
 
       {resolvedPreviewSrc ? (
-        <div className="rounded-lg border border-zinc-800 p-4">
-          <p className="mb-3 text-sm text-zinc-400">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="mb-3 text-sm text-text-secondary">
             {mode === "edit" ? "Imagem base da edição" : "Pré-visualização"}
           </p>
 
-          <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-zinc-800">
+          <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-surface">
             <Image
               src={resolvedPreviewSrc}
               alt="Imagem base"
@@ -127,11 +127,11 @@ export default function RenderFormBase({
 
       {mode === "create" ? (
         <div>
-          <label className="mb-1 block text-sm">Preset</label>
+          <label className="mb-1 block text-sm text-text-primary">Preset</label>
           <select
             value={presetId}
             onChange={(e) => setPresetId(e.target.value as RenderPresetId)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2"
+            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-text-primary outline-none transition focus:border-primary"
           >
             <option value="daylight_9am">Daylight 9AM</option>
             <option value="blue_hour">Blue Hour</option>
@@ -140,7 +140,7 @@ export default function RenderFormBase({
       ) : null}
 
       <div>
-        <label className="mb-1 block text-sm">
+        <label className="mb-1 block text-sm text-text-primary">
           {mode === "edit" ? "O que deseja alterar?" : "Prompt adicional"}
         </label>
         <textarea
@@ -151,7 +151,7 @@ export default function RenderFormBase({
               ? "Ex: trocar a parede de madeira por uma parede branca lisa"
               : "Opcional"
           }
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2"
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-text-primary outline-none transition placeholder:text-text-secondary focus:border-primary"
           rows={4}
         />
       </div>
@@ -159,7 +159,7 @@ export default function RenderFormBase({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="rounded-lg bg-violet-600 px-4 py-2 text-white disabled:opacity-50"
+        className="rounded-lg bg-primary px-4 py-2 text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
       >
         {status === "uploading"
           ? "Enviando imagem..."
@@ -174,16 +174,16 @@ export default function RenderFormBase({
                 : "Gerar render"}
       </button>
 
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+      {error ? <p className="text-sm text-error">{error}</p> : null}
 
       {result ? (
-        <div className="rounded-lg border border-zinc-800 p-4">
+        <div className="rounded-lg border border-border bg-card p-4">
           {(() => {
             const statusInfo = getRenderStatus(result.status);
             const Icon = statusInfo.icon;
 
             return (
-              <div className="flex items-center gap-2 text-sm text-zinc-300">
+              <div className="flex items-center gap-2 text-sm text-text-secondary">
                 <Icon size={18} />
                 <span>{statusInfo.label}</span>
               </div>
@@ -191,7 +191,7 @@ export default function RenderFormBase({
           })()}
 
           {resolvedGeneratedImageSrc ? (
-            <div className="relative mt-4 aspect-video w-full overflow-hidden rounded-xl border border-zinc-800">
+            <div className="relative mt-4 aspect-video w-full overflow-hidden rounded-xl border border-border bg-surface">
               <Image
                 src={resolvedGeneratedImageSrc}
                 alt="Render gerado"
@@ -201,6 +201,7 @@ export default function RenderFormBase({
               />
             </div>
           ) : null}
+
           {showActions && resolvedGeneratedImageSrc ? (
             <div className="mt-4 flex flex-wrap gap-3">
               <a
@@ -208,7 +209,7 @@ export default function RenderFormBase({
                 download
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-white transition hover:bg-zinc-800"
+                className="rounded-lg border border-border bg-surface px-4 py-2 text-sm text-text-primary transition hover:bg-surface-hover"
               >
                 Download
               </a>
@@ -217,7 +218,7 @@ export default function RenderFormBase({
                 <button
                   type="button"
                   onClick={() => onEditClick(result)}
-                  className="rounded-lg bg-violet-600 px-4 py-2 text-sm text-white transition hover:bg-violet-500"
+                  className="rounded-lg bg-primary px-4 py-2 text-sm text-white transition hover:bg-primary-hover"
                 >
                   Editar
                 </button>
@@ -226,7 +227,7 @@ export default function RenderFormBase({
           ) : null}
 
           {result.errorMessage ? (
-            <p className="mt-2 text-sm text-red-400">{result.errorMessage}</p>
+            <p className="mt-2 text-sm text-error">{result.errorMessage}</p>
           ) : null}
         </div>
       ) : null}
