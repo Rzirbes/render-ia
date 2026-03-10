@@ -17,9 +17,6 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
 
-  console.log("TOKEN:", token);
-  console.log("API_URL:", API_URL);
-
   if (!token || !API_URL) return null;
 
   const response = await fetch(`${API_URL}/auth/me`, {
@@ -28,8 +25,6 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     },
     cache: "no-store",
   });
-
-  console.log("STATUS /auth/me:", response.status);
 
   if (!response.ok) return null;
 

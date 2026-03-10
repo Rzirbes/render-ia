@@ -1,10 +1,26 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/features/auth/hooks/use-current-user";
-import { IconBolt, IconCoins, IconUser } from "@tabler/icons-react";
+import { logoutAction } from "@/features/auth/server/logout";
+import { IconBolt, IconCoins, IconUser, IconLogout } from "@tabler/icons-react";
 
 export default function AppHeader() {
-  const { user, isLoading } = useCurrentUser();
+  const { user, isLoading, mutateUser } = useCurrentUser();
+  const router = useRouter();
+
+  async function handleLogout() {
+    try {
+      await logoutAction();
+
+      await mutateUser(undefined, { revalidate: false });
+
+      router.push("/login");
+      router.refresh();
+    } catch (err) {
+      console.error("Erro ao fazer logout", err);
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur">
@@ -28,6 +44,14 @@ export default function AppHeader() {
                 <IconCoins size={16} className="text-brand" />
                 <span className="text-text-primary">{user.credits}</span>
               </div>
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 rounded-lg border border-border px-3 py-1 transition hover:bg-surface"
+              >
+                <IconLogout size={16} />
+                Sair
+              </button>
             </>
           ) : (
             <span className="text-text-muted">Não autenticado</span>
