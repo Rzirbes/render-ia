@@ -49,7 +49,6 @@ export type CurrentUser = {
 
 export type MeResponse = {
   user: CurrentUser;
-  accessToken: string;
 };
 
 export type DashboardLayoutProps = {
