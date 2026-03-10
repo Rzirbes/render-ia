@@ -6,6 +6,8 @@ import {
   processRenderService,
 } from "../client/render.service";
 import RenderFormBase from "./render-form-base";
+import { useSWRConfig } from "swr";
+import { useCurrentUser } from "@/features/auth/hooks/use-current-user";
 
 type RenderEditFormProps = {
   renderId: string;
@@ -19,6 +21,8 @@ export default function RenderEditForm({
   onSuccess,
 }: RenderEditFormProps) {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
+  const { mutate } = useSWRConfig();
+  const { mutateUser } = useCurrentUser();
 
   return (
     <RenderFormBase
@@ -57,6 +61,9 @@ export default function RenderEditForm({
 
           setResult(finalResult);
           onSuccess?.(finalResult);
+
+          await Promise.all([mutateUser(), mutate("renders")]);
+
           setStatus("done");
         } catch (err) {
           setError(

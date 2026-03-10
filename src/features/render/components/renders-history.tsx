@@ -1,24 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import {
   RenderHistoryEmpty,
   RenderHistoryError,
   RenderHistoryLoading,
 } from "./render-history-states";
 import { RenderHistoryList } from "./render-history-list";
-import { RenderItem, RenderItemList } from "../types/render.types";
-import { getRenderService, listRendersService } from "../client/render.service";
+import { RenderItem } from "../types/render.types";
+import { getRenderService } from "../client/render.service";
+import { useRenders } from "../hooks/use-renders";
 
 type Props = {
   onOpenRender: (render: RenderItem) => void;
 };
 
 export function RendersHistory({ onOpenRender }: Props) {
-  const [renders, setRenders] = useState<RenderItemList[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { renders, error, isLoading } = useRenders();
 
   async function handleOpenRender(id: string) {
     try {
@@ -29,30 +26,14 @@ export function RendersHistory({ onOpenRender }: Props) {
     }
   }
 
-  useEffect(() => {
-    async function load() {
-      try {
-        setError(null);
-
-        const data = await listRendersService();
-        setRenders(data.items ?? []);
-      } catch (err) {
-        console.error("Erro ao carregar renders", err);
-        setError("Não foi possível carregar os renders.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    load();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return <RenderHistoryLoading />;
   }
 
   if (error) {
-    return <RenderHistoryError message={error} />;
+    return (
+      <RenderHistoryError message="Não foi possível carregar os renders." />
+    );
   }
 
   if (renders.length === 0) {

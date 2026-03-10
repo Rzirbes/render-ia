@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSWRConfig } from "swr";
 import type { RenderItem } from "@/features/render/types/render.types";
 import {
   createRenderService,
@@ -15,9 +16,12 @@ import {
   downloadRenderImage,
   getRenderDownloadFileName,
 } from "../utils/download-render-image";
+import { useCurrentUser } from "@/features/auth/hooks/use-current-user";
 
 export default function RenderCreateForm() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
+  const { mutate } = useSWRConfig();
+  const { mutateUser } = useCurrentUser();
 
   const [sessionRenders, setSessionRenders] = useState<RenderItem[]>([]);
   const [editingRenderId, setEditingRenderId] = useState<string | null>(null);
@@ -115,6 +119,9 @@ export default function RenderCreateForm() {
 
       setResult(finalResult);
       handleAddRender(finalResult);
+
+      await Promise.all([mutateUser(), mutate("renders")]);
+
       setStatus("done");
     } catch (err) {
       setError(
