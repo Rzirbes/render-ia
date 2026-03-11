@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSWRConfig } from "swr";
+import imageCompression from "browser-image-compression";
 import type { RenderItem } from "@/features/render/types/render.types";
 import {
   createRenderService,
@@ -17,6 +18,9 @@ import {
   getRenderDownloadFileName,
 } from "../utils/download-render-image";
 import { useCurrentUser } from "@/features/auth/hooks/use-current-user";
+
+const MAX_FILE_SIZE_MB = 20;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 export default function RenderCreateForm() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "";
@@ -34,6 +38,34 @@ export default function RenderCreateForm() {
     if (url.startsWith("http")) return url;
     if (url.startsWith("/")) return url;
     return `${apiUrl}${url}`;
+  }
+
+  async function compressImageIfNeeded(file: File) {
+    if (!file.type.startsWith("image/")) {
+      throw new Error("Envie um arquivo de imagem válido.");
+    }
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      throw new Error(
+        `A imagem é muito grande. Envie um arquivo de até ${MAX_FILE_SIZE_MB}MB.`,
+      );
+    }
+
+    const shouldCompress =
+      file.size > 2 * 1024 * 1024 || file.type === "image/png";
+
+    if (!shouldCompress) {
+      return file;
+    }
+
+    const compressedFile = await imageCompression(file, {
+      maxSizeMB: 1.5,
+      maxWidthOrHeight: 1800,
+      useWebWorker: true,
+      initialQuality: 0.85,
+    });
+
+    return compressedFile;
   }
 
   async function handleDownloadRender(render: RenderItem) {
@@ -101,7 +133,9 @@ export default function RenderCreateForm() {
       setResult(null);
 
       setStatus("uploading");
-      const uploaded = await uploadRenderImageService(file);
+
+      const finalFile = await compressImageIfNeeded(file);
+      const uploaded = await uploadRenderImageService(finalFile);
 
       setStatus("creating");
       const created = await createRenderService({
@@ -129,9 +163,17 @@ export default function RenderCreateForm() {
 
       setStatus("done");
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erro ao processar render.",
-      );
+      const message =
+        err instanceof Error ? err.message : "Erro ao processar render.";
+
+      if (message.includes("FUNCTION_PAYLOAD_TOO_LARGE")) {
+        setError(
+          "A imagem enviada é muito grande. Tente usar um arquivo menor ou exportar em JPG.",
+        );
+      } else {
+        setError(message);
+      }
+
       setStatus("error");
     }
   }
