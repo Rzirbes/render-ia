@@ -45,7 +45,7 @@ export default function RenderEditForm({
             prompt: prompt || undefined,
             presetId,
           });
-
+          await Promise.all([mutateUser(), mutate("renders")]);
           setStatus("processing");
           const processed = await processRenderService(created.id);
           console.log("EDIT PROCESSED", processed);

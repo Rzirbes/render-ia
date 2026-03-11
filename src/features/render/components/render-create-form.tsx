@@ -26,6 +26,9 @@ export default function RenderCreateForm() {
   const [sessionRenders, setSessionRenders] = useState<RenderItem[]>([]);
   const [editingRenderId, setEditingRenderId] = useState<string | null>(null);
 
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [formResetKey, setFormResetKey] = useState(0);
+
   function normalizeImageUrl(url?: string | null) {
     if (!url) return null;
     if (url.startsWith("http")) return url;
@@ -109,6 +112,8 @@ export default function RenderCreateForm() {
         prompt: prompt || undefined,
       });
 
+      await Promise.all([mutateUser(), mutate("renders")]);
+
       setStatus("processing");
       const processed = await processRenderService(created.id);
 
@@ -135,12 +140,26 @@ export default function RenderCreateForm() {
     setEditingRenderId((prev) => (prev === renderId ? null : renderId));
   }
 
+  function handleOpenPreview(imageUrl: string) {
+    setPreviewImageUrl(imageUrl);
+  }
+
+  function handleClosePreview() {
+    setPreviewImageUrl(null);
+  }
+
+  function handleClearForm() {
+    setFormResetKey((prev) => prev + 1);
+  }
+
   return (
     <div className="space-y-8">
       <RenderFormBase
+        key={formResetKey}
         mode="create"
         allowFileUpload
         onSubmit={handleCreateRender}
+        onClear={handleClearForm}
       />
 
       <RenderSessionList
@@ -151,6 +170,32 @@ export default function RenderCreateForm() {
         onSuccessEdit={handleAddEditedRender}
         onDownload={handleDownloadRender}
       />
+
+      {previewImageUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={handleClosePreview}
+        >
+          <div
+            className="relative max-h-[90vh] max-w-[90vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={handleClosePreview}
+              className="absolute -right-3 -top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-lg"
+            >
+              ×
+            </button>
+
+            <img
+              src={previewImageUrl}
+              alt="Preview do render"
+              className="max-h-[90vh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

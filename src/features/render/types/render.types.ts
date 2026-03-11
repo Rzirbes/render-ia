@@ -1,6 +1,9 @@
 import { FormStatus } from "react-dom";
 
-export type RenderPresetId = "daylight_9am" | "blue_hour";
+export type RenderPresetId =
+  | "daylight_9am"
+  | "blue_hour"
+  | "exterior_daylight_locked";
 
 export type RenderStatus = "PENDING" | "PROCESSING" | "DONE" | "ERROR";
 
