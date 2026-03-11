@@ -140,10 +140,6 @@ export default function RenderCreateForm() {
     setEditingRenderId((prev) => (prev === renderId ? null : renderId));
   }
 
-  function handleOpenPreview(imageUrl: string) {
-    setPreviewImageUrl(imageUrl);
-  }
-
   function handleClosePreview() {
     setPreviewImageUrl(null);
   }

@@ -5,9 +5,9 @@ const locales = ["pt", "en"];
 const defaultLocale = "pt";
 
 const publicRoutes = ["/login", "/register"];
-const protectedRoutes = ["/home", "/render"];
+const protectedRoutes = ["/home", "/dashboard", "/render"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isApiRoute = pathname.startsWith("/api");

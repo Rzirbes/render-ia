@@ -12,7 +12,6 @@ type RenderDashboardClientProps = {
 };
 
 export default function RenderDashboardClient({
-  totalRenders = 0,
 }: RenderDashboardClientProps) {
   const [selectedRender, setSelectedRender] = useState<RenderItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
