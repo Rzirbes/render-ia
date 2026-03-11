@@ -57,3 +57,13 @@ export type DashboardLayoutProps = {
     locale: string;
   }>;
 };
+
+export type ForgotPasswordRequest = {
+  email: string;
+  locale?: string;
+};
+
+export type ForgotPasswordResponse = {
+  ok: boolean;
+  message?: string;
+};
