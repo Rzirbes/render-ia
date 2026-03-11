@@ -1,5 +1,5 @@
-import RenderForm from "@/features/render/components/render-form";
+import DashboardPage from "./[locale]/dashboard/page";
 
 export default function Page() {
-  return <RenderForm />;
+  return <DashboardPage />;
 }
