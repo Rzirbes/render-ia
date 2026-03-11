@@ -18,8 +18,8 @@ function isRegisterResponse(value: unknown): value is RegisterResponse {
   return (
     typeof value === "object" &&
     value !== null &&
-    "id" in value &&
-    "email" in value
+    "user" in value &&
+    "accessToken" in value
   );
 }
 

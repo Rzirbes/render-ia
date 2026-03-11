@@ -6,11 +6,14 @@ export type RegisterFormData = {
 };
 
 export type RegisterResponse = {
-  id: string;
-  name?: string | null;
-  email: string;
-  credits?: number;
-  createdAt?: string;
+  user: {
+    id: string;
+    name?: string | null;
+    email: string;
+    credits: number;
+    createdAt: string;
+  };
+  accessToken: string;
 };
 
 export type LoginFormData = {
