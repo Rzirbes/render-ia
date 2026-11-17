@@ -25,7 +25,7 @@ com integração a IA generativa, processamento assíncrono e gerenciamento de c
 
 <img src="docs/results/render-1.jpg" alt="Render fotorrealista de uma sala de estar com sofá claro, painel de madeira, televisão, lareira linear em bancada de mármore verde e janelas amplas com cortinas, gerado pelo RenderIA" width="900" />
 
-<sub>Render real gerado pela aplicação.</sub>
+<sub>Render real gerado pela aplicação · veja o <a href="#antes-e-depois--ia-aplicada-à-arquitetura">antes e depois</a>.</sub>
 
 </div>
 
@@ -107,15 +107,19 @@ O formulário de criação reúne upload da imagem, seleção do preset de ilumi
 > O card "Plano atual" exibe um valor fixo de interface; não existe sistema de planos.
 > As telas de processamento, histórico preenchido, visualização/download e edição ainda serão adicionadas (ver [Estado do projeto](#estado-do-projeto)).
 
-### Resultados gerados pela aplicação
+### Antes e depois — IA aplicada à arquitetura
 
-Renders reais produzidos pelo RenderIA para um mesmo ambiente interno, mostrando variações de iluminação e acabamento sobre a mesma composição. A imagem no topo deste README pertence à mesma série.
+À esquerda, a imagem enviada: uma vista de um modelo 3D de sala de estar, com materiais simplificados e linhas de contorno. À direita, o render fotorrealista gerado pelo RenderIA, com a mesma câmera, layout e mobiliário.
+
+| Imagem enviada (modelo 3D) | Resultado gerado pelo RenderIA |
+| :---: | :---: |
+| <img src="docs/results/input-1.jpg" alt="Imagem de entrada: vista de um modelo 3D de sala de estar com sofá claro, poltronas, mesa de centro preta, painel de madeira com televisão e bancada de mármore verde com lareira, em estilo de maquete com linhas de contorno" width="440" /> | <img src="docs/results/render-1.jpg" alt="Resultado: render fotorrealista da mesma sala de estar, com a mesma composição, iluminação natural pelas janelas, texturas realistas e sombras suaves" width="440" /> |
+
+**Outras variações da mesma cena**
 
 | | |
 | :---: | :---: |
 | <img src="docs/results/render-2.jpg" alt="Variação do render da mesma sala de estar com iluminação natural mais suave e tons neutros, gerada pelo RenderIA" width="440" /> | <img src="docs/results/render-3.jpg" alt="Variação do render da mesma sala de estar com painel ripado de madeira iluminado e piso polido, gerada pelo RenderIA" width="440" /> |
-
-> As imagens de entrada correspondentes a esses resultados ainda não foram incluídas; a comparação **antes e depois** será adicionada quando os pares estiverem disponíveis.
 
 ---
 
@@ -344,7 +348,7 @@ O RenderIA é um MVP funcional que está passando por melhorias de **segurança,
 - Autenticação administrativa definitiva (hoje provisória, por chave)
 - Armazenamento de imagens em serviço externo e persistência de longo prazo
 - Testes automatizados no frontend
-- Capturas das telas de processamento, histórico, visualização/download, edição e comparativos antes/depois
+- Capturas das telas de processamento, histórico, visualização/download e edição
 
 ---
 
