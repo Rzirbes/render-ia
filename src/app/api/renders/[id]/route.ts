@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { renderErrorResponse } from "@/features/render/server/route-error";
 import {
   deleteRender,
   getRender,
@@ -17,13 +18,7 @@ export async function GET(_: Request, { params }: RouteContext) {
 
     return NextResponse.json(render);
   } catch (error) {
-    return NextResponse.json(
-      {
-        message:
-          error instanceof Error ? error.message : "Erro ao buscar render.",
-      },
-      { status: 500 },
-    );
+    return renderErrorResponse(error, "Erro ao buscar render.");
   }
 }
 
@@ -34,12 +29,6 @@ export async function DELETE(_: Request, { params }: RouteContext) {
 
     return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json(
-      {
-        message:
-          error instanceof Error ? error.message : "Erro ao remover render.",
-      },
-      { status: 500 },
-    );
+    return renderErrorResponse(error, "Erro ao remover render.");
   }
 }

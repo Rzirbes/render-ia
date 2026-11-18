@@ -1,4 +1,5 @@
 import { editRender } from "@/features/render/server/render.service";
+import { renderErrorResponse } from "@/features/render/server/route-error";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
@@ -16,12 +17,6 @@ export async function POST(
 
     return NextResponse.json(render);
   } catch (error) {
-    return NextResponse.json(
-      {
-        message:
-          error instanceof Error ? error.message : "Erro ao editar render.",
-      },
-      { status: 500 },
-    );
+    return renderErrorResponse(error, "Erro ao editar render.");
   }
 }

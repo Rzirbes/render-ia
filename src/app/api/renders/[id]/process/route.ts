@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { renderErrorResponse } from "@/features/render/server/route-error";
 import { processRender } from "@/features/render/server/render.service";
 
 type RouteContext = {
@@ -14,12 +15,6 @@ export async function POST(_: Request, { params }: RouteContext) {
 
     return NextResponse.json(render);
   } catch (error) {
-    return NextResponse.json(
-      {
-        message:
-          error instanceof Error ? error.message : "Erro ao processar render.",
-      },
-      { status: 500 },
-    );
+    return renderErrorResponse(error, "Erro ao processar render.");
   }
 }

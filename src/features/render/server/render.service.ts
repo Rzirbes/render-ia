@@ -8,6 +8,7 @@ import type {
   RenderItem,
   UploadRenderImageResponse,
 } from "../types/render.types";
+import { ApiError, parseApiResponse } from "../utils/api-error";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -24,7 +25,7 @@ async function apiRenderFetch(path: string, init?: RequestInit) {
   }
 
   if (!token) {
-    throw new Error("Usuário não autenticado.");
+    throw new ApiError(401, "Usuário não autenticado.");
   }
 
   const headers = new Headers(init?.headers);
@@ -44,40 +45,6 @@ async function apiRenderFetch(path: string, init?: RequestInit) {
   });
 
   return response;
-}
-
-async function parseApiResponse<T>(
-  response: Response,
-  fallbackMessage: string,
-): Promise<T> {
-  const text = await response.text();
-
-  let data: unknown = null;
-
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = text;
-  }
-
-  if (!response.ok) {
-    if (
-      data &&
-      typeof data === "object" &&
-      "message" in data &&
-      typeof (data as { message?: unknown }).message === "string"
-    ) {
-      throw new Error((data as { message: string }).message);
-    }
-
-    if (typeof data === "string" && data.trim()) {
-      throw new Error(data);
-    }
-
-    throw new Error(fallbackMessage);
-  }
-
-  return data as T;
 }
 
 export async function uploadRenderImage(

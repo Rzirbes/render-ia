@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { renderErrorResponse } from "@/features/render/server/route-error";
 import { uploadRenderImage } from "@/features/render/server/render.service";
 
 export async function POST(request: Request) {
@@ -17,12 +18,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json(
-      {
-        message:
-          error instanceof Error ? error.message : "Erro ao enviar imagem.",
-      },
-      { status: 500 },
-    );
+    return renderErrorResponse(error, "Erro ao enviar imagem.");
   }
 }

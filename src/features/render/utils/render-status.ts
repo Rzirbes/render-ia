@@ -54,3 +54,11 @@ export function getRenderStatus(status: RenderItem["status"]) {
       };
   }
 }
+
+/**
+ * Exclusão não é permitida durante o processamento (a API responde 409
+ * RENDER_PROCESSING): os créditos já foram debitados e a IA está gerando.
+ */
+export function canDeleteRender(status: RenderItem["status"]): boolean {
+  return status !== "PROCESSING";
+}
