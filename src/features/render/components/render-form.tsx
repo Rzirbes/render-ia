@@ -7,8 +7,8 @@ import type {
 } from "@/features/render/types/render.types";
 import {
   createRenderService,
-  processRenderService,
   uploadRenderImageService,
+  waitForRenderCompletion,
 } from "../client/render.service";
 import { getRenderStatus } from "../utils/render-status";
 import Image from "next/image";
@@ -76,7 +76,7 @@ export default function RenderForm() {
       });
 
       setStatus("processing");
-      const processed = await processRenderService(created.id);
+      const processed = await waitForRenderCompletion(created.id);
 
       setResult(processed);
       setStatus("done");

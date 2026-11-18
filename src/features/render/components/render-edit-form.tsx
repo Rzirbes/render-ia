@@ -3,7 +3,7 @@
 import type { RenderItem } from "@/features/render/types/render.types";
 import {
   editRenderService,
-  processRenderService,
+  waitForRenderCompletion,
 } from "../client/render.service";
 import RenderFormBase from "./render-form-base";
 import { useSWRConfig } from "swr";
@@ -46,9 +46,9 @@ export default function RenderEditForm({
             presetId,
           });
           await Promise.all([mutateUser(), mutate("renders")]);
+          // A edição já foi enfileirada na criação; apenas acompanhamos.
           setStatus("processing");
-          const processed = await processRenderService(created.id);
-          console.log("EDIT PROCESSED", processed);
+          const processed = await waitForRenderCompletion(created.id);
 
           const finalResult = {
             ...processed,

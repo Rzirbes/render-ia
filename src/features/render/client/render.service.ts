@@ -71,18 +71,63 @@ export async function createRenderService(
   return parseResponse<RenderItem>(response, "Erro ao criar render.");
 }
 
-export async function processRenderService(id: string): Promise<RenderItem> {
-  const response = await fetch(`/api/renders/${id}/process`, {
-    method: "POST",
-  });
-
-  return parseResponse<RenderItem>(response, "Erro ao processar render.");
-}
-
 export async function getRenderService(id: string): Promise<RenderItem> {
   const response = await fetch(`/api/renders/${id}`);
 
   return parseResponse<RenderItem>(response, "Erro ao buscar render.");
+}
+
+const FINAL_STATUSES = new Set<RenderItem["status"]>(["DONE", "ERROR"]);
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Acompanha um render até DONE ou ERROR.
+ *
+ * O processamento é feito exclusivamente pelo worker da API (BullMQ) assim
+ * que o render é criado; o frontend apenas consulta o status. Nunca dispara
+ * um segundo processamento.
+ */
+export async function waitForRenderCompletion(
+  id: string,
+  {
+    intervalMs = 2000,
+    timeoutMs = 10 * 60 * 1000,
+    maxConsecutiveErrors = 3,
+  }: {
+    intervalMs?: number;
+    timeoutMs?: number;
+    maxConsecutiveErrors?: number;
+  } = {},
+): Promise<RenderItem> {
+  const deadline = Date.now() + timeoutMs;
+  let consecutiveErrors = 0;
+
+  for (;;) {
+    try {
+      const render = await getRenderService(id);
+      consecutiveErrors = 0;
+
+      if (FINAL_STATUSES.has(render.status)) {
+        return render;
+      }
+    } catch (err) {
+      consecutiveErrors += 1;
+      if (consecutiveErrors >= maxConsecutiveErrors) {
+        throw err;
+      }
+    }
+
+    if (Date.now() >= deadline) {
+      throw new Error(
+        "O render ainda está em processamento. Acompanhe o resultado no histórico.",
+      );
+    }
+
+    await sleep(intervalMs);
+  }
 }
 
 export async function listRendersService(

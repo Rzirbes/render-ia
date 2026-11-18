@@ -6,8 +6,8 @@ import imageCompression from "browser-image-compression";
 import type { RenderItem } from "@/features/render/types/render.types";
 import {
   createRenderService,
-  processRenderService,
   uploadRenderImageService,
+  waitForRenderCompletion,
 } from "../client/render.service";
 import RenderFormBase, {
   type RenderFormSubmitParams,
@@ -148,8 +148,9 @@ export default function RenderCreateForm() {
 
       await Promise.all([mutateUser(), mutate("renders")]);
 
+      // O render já foi enfileirado na criação; apenas acompanhamos o status.
       setStatus("processing");
-      const processed = await processRenderService(created.id);
+      const processed = await waitForRenderCompletion(created.id);
 
       const finalResult = {
         ...processed,
