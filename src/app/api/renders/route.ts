@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { renderErrorResponse } from "@/features/render/server/route-error";
 import {
   createRender,
   listRenders,
@@ -8,11 +9,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    if (
-      !body.originalImageUrl ||
-      !body.originalImagePath ||
-      !body.originalImageMimeType
-    ) {
+    if (!body.originalImagePath) {
       return NextResponse.json(
         { message: "Dados da imagem incompletos." },
         { status: 400 },
@@ -31,13 +28,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(render, { status: 201 });
   } catch (error) {
-    return NextResponse.json(
-      {
-        message:
-          error instanceof Error ? error.message : "Erro ao criar render.",
-      },
-      { status: 500 },
-    );
+    return renderErrorResponse(error, "Erro ao criar render.");
   }
 }
 
@@ -52,12 +43,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(renders);
   } catch (error) {
-    return NextResponse.json(
-      {
-        message:
-          error instanceof Error ? error.message : "Erro ao listar renders.",
-      },
-      { status: 500 },
-    );
+    return renderErrorResponse(error, "Erro ao listar renders.");
   }
 }

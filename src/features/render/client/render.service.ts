@@ -5,39 +5,13 @@ import type {
   RenderItem,
   UploadRenderImageResponse,
 } from "../types/render.types";
+import {
+  isTransientError,
+  parseApiResponse as parseResponse,
+} from "../utils/api-error";
 
-async function parseResponse<T>(
-  response: Response,
-  fallbackMessage: string,
-): Promise<T> {
-  const text = await response.text();
-
-  let data: unknown = null;
-
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = text;
-  }
-
-  if (!response.ok) {
-    if (
-      data &&
-      typeof data === "object" &&
-      "message" in data &&
-      typeof (data as { message?: unknown }).message === "string"
-    ) {
-      throw new Error((data as { message: string }).message);
-    }
-
-    if (typeof data === "string" && data.trim()) {
-      throw new Error(data);
-    }
-
-    throw new Error(fallbackMessage);
-  }
-
-  return data as T;
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function uploadRenderImageService(
@@ -57,18 +31,37 @@ export async function uploadRenderImageService(
   );
 }
 
+/**
+ * Cria um render. `clientRequestId` é obrigatório: identifica a solicitação
+ * lógica e é reenviado, idêntico, nos retries automáticos de falhas
+ * transitórias (rede, 502/503/504). Se uma tentativa anterior chegou a criar
+ * o render, a API devolve o mesmo render (sem nova cobrança).
+ */
 export async function createRenderService(
-  payload: CreateRenderPayload,
+  payload: CreateRenderPayload & { clientRequestId: string },
+  { maxAttempts = 3, baseDelayMs = 1000 } = {},
 ): Promise<RenderItem> {
-  const response = await fetch("/api/renders", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const response = await fetch("/api/renders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-  return parseResponse<RenderItem>(response, "Erro ao criar render.");
+      return await parseResponse<RenderItem>(
+        response,
+        "Erro ao criar render.",
+      );
+    } catch (err) {
+      if (attempt >= maxAttempts || !isTransientError(err)) {
+        throw err;
+      }
+      await sleep(baseDelayMs * 2 ** (attempt - 1));
+    }
+  }
 }
 
 export async function getRenderService(id: string): Promise<RenderItem> {
@@ -79,9 +72,6 @@ export async function getRenderService(id: string): Promise<RenderItem> {
 
 const FINAL_STATUSES = new Set<RenderItem["status"]>(["DONE", "ERROR"]);
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 /**
  * Acompanha um render até DONE ou ERROR.
@@ -144,6 +134,11 @@ export async function listRendersService(
   );
 }
 
+/**
+ * Remove um render. A API recusa com 409 RENDER_PROCESSING enquanto ele está
+ * sendo gerado; o `ApiError` lançado já traz a mensagem amigável. Use
+ * `canDeleteRender` para nem oferecer a ação nesse estado.
+ */
 export async function deleteRenderService(id: string): Promise<{ ok: true }> {
   const response = await fetch(`/api/renders/${id}`, {
     method: "DELETE",

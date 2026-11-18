@@ -10,6 +10,7 @@ import {
   uploadRenderImageService,
   waitForRenderCompletion,
 } from "../client/render.service";
+import { generateClientRequestId } from "../utils/create-request";
 import { getRenderStatus } from "../utils/render-status";
 import Image from "next/image";
 
@@ -73,6 +74,7 @@ export default function RenderForm() {
         originalImageMimeType: uploaded.mimeType,
         presetId,
         prompt: prompt || undefined,
+        clientRequestId: generateClientRequestId(),
       });
 
       setStatus("processing");

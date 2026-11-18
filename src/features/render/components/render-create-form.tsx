@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 import imageCompression from "browser-image-compression";
 import type { RenderItem } from "@/features/render/types/render.types";
@@ -18,6 +18,14 @@ import {
   getRenderDownloadFileName,
 } from "../utils/download-render-image";
 import { useCurrentUser } from "@/features/auth/hooks/use-current-user";
+import {
+  IDEMPOTENCY_KEY_REUSED,
+  isApiErrorCode,
+} from "../utils/api-error";
+import {
+  resolveCreateAttempt,
+  type CreateRequestAttempt,
+} from "../utils/create-request";
 
 const MAX_FILE_SIZE_MB = 20;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -32,6 +40,14 @@ export default function RenderCreateForm() {
 
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [formResetKey, setFormResetKey] = useState(0);
+
+  // Solicitação de criação ainda não confirmada pela API (ver
+  // utils/create-request.ts). Reaproveitada num novo clique com os mesmos
+  // dados; descartada após sucesso, ao limpar o formulário ou se a API
+  // recusar a chave.
+  const pendingCreateRef = useRef<CreateRequestAttempt | null>(null);
+  // Impede duas submissões simultâneas (duplo clique antes do re-render).
+  const submittingRef = useRef(false);
 
   function normalizeImageUrl(url?: string | null) {
     if (!url) return null;
@@ -128,23 +144,48 @@ export default function RenderCreateForm() {
       return;
     }
 
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+
+    const attempt = resolveCreateAttempt(pendingCreateRef.current, {
+      file,
+      prompt,
+      presetId,
+    });
+    pendingCreateRef.current = attempt;
+
     try {
       setError(null);
       setResult(null);
 
-      setStatus("uploading");
-
-      const finalFile = await compressImageIfNeeded(file);
-      const uploaded = await uploadRenderImageService(finalFile);
+      if (!attempt.uploaded) {
+        setStatus("uploading");
+        const finalFile = await compressImageIfNeeded(file);
+        attempt.uploaded = await uploadRenderImageService(finalFile);
+      }
+      const uploaded = attempt.uploaded;
 
       setStatus("creating");
-      const created = await createRenderService({
-        originalImageUrl: uploaded.url,
-        originalImagePath: uploaded.path,
-        originalImageMimeType: uploaded.mimeType,
-        presetId,
-        prompt: prompt || undefined,
-      });
+      let created: RenderItem;
+      try {
+        created = await createRenderService({
+          originalImageUrl: uploaded.url,
+          originalImagePath: uploaded.path,
+          originalImageMimeType: uploaded.mimeType,
+          presetId,
+          prompt: prompt || undefined,
+          clientRequestId: attempt.clientRequestId,
+        });
+      } catch (createError) {
+        if (isApiErrorCode(createError, IDEMPOTENCY_KEY_REUSED)) {
+          // Chave inutilizável: o próximo clique gera uma nova solicitação.
+          pendingCreateRef.current = null;
+        }
+        throw createError;
+      }
+
+      // Criação confirmada: um novo clique é uma nova solicitação.
+      pendingCreateRef.current = null;
 
       await Promise.all([mutateUser(), mutate("renders")]);
 
@@ -176,6 +217,8 @@ export default function RenderCreateForm() {
       }
 
       setStatus("error");
+    } finally {
+      submittingRef.current = false;
     }
   }
 
@@ -188,6 +231,7 @@ export default function RenderCreateForm() {
   }
 
   function handleClearForm() {
+    pendingCreateRef.current = null;
     setFormResetKey((prev) => prev + 1);
   }
 
